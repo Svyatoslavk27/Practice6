@@ -1,0 +1,104 @@
+import numpy as np 
+import matplotlib.pyplot as plt 
+import random 
+import itertools 
+
+#Параметри задачі
+N_PTM1 = 20 
+N_PTM2 = 10 
+alpha = 2 
+beta = 1 
+rho = 0.001 
+Q = 1 
+N_iter = 100 
+num_ants = 100 
+F0 = 0.01 
+
+#Генерація точок
+np.random.seed(42) 
+BTM = np.array([[0, 0]]) 
+KTM = np.array([[30, 0]]) 
+PTM1 = np.random.normal(loc=10, scale=2, size=(N_PTM1, 2)) 
+PTM2 = np.random.normal(loc=20, scale=2, size=(N_PTM2, 2)) 
+points = np.vstack([BTM, PTM1, PTM2, KTM]) 
+
+index_BTM = 0 
+index_PTM1 = list(range(1, 1 + N_PTM1)) 
+index_PTM2 = list(range(1 + N_PTM1, 1 + N_PTM1 + N_PTM2)) 
+index_KTM = len(points) - 1 
+
+#Відстань та доступність
+def euclidean(p1, p2): 
+    return np.linalg.norm(p1 - p2) 
+
+def accessibility(p1, p2): 
+    return 1.0 / euclidean(p1, p2) 
+L1 = np.array([[accessibility(points[i], points[j]) for j in index_PTM1] for i 
+in [index_BTM]]) 
+L2 = np.array([[accessibility(points[i], points[j]) for j in index_PTM2] for i 
+in index_PTM1]) 
+L3 = np.array([[accessibility(points[i], points[index_KTM])] for i in 
+index_PTM2]) 
+
+tau1 = np.full(L1.shape, F0) 
+tau2 = np.full(L2.shape, F0) 
+tau3 = np.full(L3.shape, F0) 
+taus = [tau1, tau2, tau3] 
+
+#Завдання 6.1: MMAS (ACO)
+best_path = None 
+best_length = float('inf') 
+
+for _ in range(N_iter): 
+    all_paths = []
+    all_lengths = [] 
+
+    for _ in range(num_ants):
+        path = [] 
+
+        #Вибір точки ПТМ1 
+        probs = (tau1[0] ** alpha) * (L1[0] ** beta)
+        probs /= probs.sum()
+        ptm1_index = np.random.choice(index_PTM1, p=probs)
+        path.append(ptm1_index) 
+
+        #Вибір точки ПТМ2 
+        probs = (tau2[ptm1_index - 1] ** alpha) * (L2[ptm1_index - 1] ** beta)
+        probs /= probs.sum() 
+        ptm2_index = np.random.choice(index_PTM2, p=probs)
+        path.append(ptm2_index)
+
+        #Обчислення довжини маршруту 
+        total_dist = (
+            euclidean(points[index_BTM], points[ptm1_index]) +
+            euclidean(points[ptm1_index], points[ptm2_index]) + 
+            euclidean(points[ptm2_index], points[index_KTM])
+        )
+
+        all_paths.append([index_BTM, ptm1_index, ptm2_index, index_KTM]) 
+        all_lengths.append(total_dist) 
+
+        if total_dist < best_length: 
+            best_length = total_dist 
+            best_path = [index_BTM, ptm1_index, ptm2_index, index_KTM]
+ 
+#Оновлення феромонів 
+for t in taus: 
+    t *= (1 - rho) 
+
+for path, length in zip(all_paths, all_lengths): 
+    i1 = 0
+    j1 = index_PTM1.index(path[1])
+    taus[0][i1][j1] += Q / length
+
+    i2 = index_PTM1.index(path[1])
+    j2 = index_PTM2.index(path[2])
+    taus[1][i2][j2] += Q / length
+
+    i3 = index_PTM2.index(path[2])
+    taus[2][i3][0] += Q / length
+ 
+#Результат ACO 
+print("Результат алгоритму мурашиної оптимізації (ACO):") 
+print("Найкращий маршрут:", list(map(int, best_path))) 
+print("Довжина маршруту:", round(best_length, 2)) 
