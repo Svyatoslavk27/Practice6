@@ -1,0 +1,51 @@
+#Завдання 6.2: Повний перебір всіх можливих маршрутів
+all_combinations = list(itertools.product(index_PTM1, index_PTM2)) 
+min_path = None 
+min_distance = float('inf') 
+
+for ptm1, ptm2 in all_combinations: 
+    dist = (
+        euclidean(points[index_BTM], points[ptm1]) + 
+        euclidean(points[ptm1], points[ptm2]) + 
+        euclidean(points[ptm2], points[index_KTM])
+    )
+    if dist < min_distance: 
+        min_distance = dist 
+        min_path = [index_BTM, ptm1, ptm2, index_KTM]
+
+#Результат перебору
+print("Результат повного перебору:") 
+print("Оптимальний маршрут:", list(map(int, min_path))) 
+print("Оптимальна довжина маршруту:", round(min_distance, 2)) 
+
+#Побудова графіка
+def plot_route(title, path): 
+    coords = points[path] 
+    plt.figure(figsize=(10, 4))
+    plt.plot(coords[:, 0], coords[:, 1], marker='o') 
+    for i, (x, y) in enumerate(coords): 
+        plt.text(x, y, f"{i+1}", fontsize=9) 
+    plt.title(title) 
+    plt.grid(True) 
+    plt.axis('equal') 
+    plt.show() 
+ 
+#Вивід вхідних параметрів задачі
+print("=== Вхідні дані задачі ===") 
+print(f"Кількість ВТМ (N_BTM): {1}") 
+print(f"Кількість КТМ (N_KTM): {1}") 
+print(f"Кількість ділянок маршруту: 3") 
+print(f"Кількість перших ПТМ (N_PTM1): {N_PTM1}") 
+print(f"Кількість других ПТМ (N_PTM2): {N_PTM2}") 
+print(f"Параметр α (вага феромонів): {alpha}") 
+print(f"Параметр β (жадібність): {beta}") 
+print(f"Швидкість випаровування ρ: {rho}") 
+print(f"Кількість ітерацій (N): {N_iter}") 
+print(f"Кількість агентів (мурах) в ітерації (m): {num_ants}") 
+print(f"Початкова кількість феромону (F0): {F0}") 
+print("Розподіл ПТМ1: нормальний, середнє = 10, σ = 2") 
+print("Розподіл ПТМ2: нормальний, середнє = 20, σ = 2") 
+print("==========================\n") 
+
+plot_route("Маршрут ACO", best_path) 
+plot_route("Маршрут методом перебору", min_path)
